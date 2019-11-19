@@ -1,0 +1,13 @@
+
+Todo:
+  ☐ Crud
+    ☐ GET /
+    ☐ GET/:id
+    ☐ PUT /:id
+    ☐ DEL /:id
+    ☐ POST /
+  ☐ Auth
+  ☐ Roles
+  ☐ Swagger
+  ☐ QueryString
+  ☐ Custom Controller (Hook) - onCreate(req, res, next)
