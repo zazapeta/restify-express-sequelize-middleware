@@ -43,19 +43,14 @@ module.exports = ({
     /**
      * CREATE
      */
-    app.post(`/${path}`, async (req, res, next) => {
+    app.post(`/${path}`, async (req, res) => {
       let resourceData = req.body;
-      let boom;
       // - AUTH
-      const { isValid, credentials } = await applyAuthModel(authCreate)(
-        model,
-        auth,
-        {
-          req,
-          verb: "post",
-          path: `/${path}`
-        }
-      );
+      const isValid = await applyAuthModel(authCreate)(auth, {
+        req,
+        verb: "post",
+        path: `/${path}`
+      });
       if (!isValid) {
         return boomIt(res, Boom.forbidden("not allowed"));
       }

@@ -52,23 +52,19 @@ function authModelSelector({ restify }) {
 /**
  * TODO: test it
  * return the result of auth given by the option.auth, or, if defined, by the model it self.
- * 'auth' method MUST return a {isValid, credentials} object.
+ * 'auth' method MUST return a boolean.
  * @param {Object} sequelizeModel
  * @param {Function} defaultAuth auth method given by the global conf
  * @param {Object} authParams should be an object with {req, verb, path}. It will be passed to the auth method
- * @returns {Object} { isValid, credentials } - default to { isValid: true, crendtials: {} }
+ * @returns {Boolean} true if auth is success. false otherwise. Default to true.
  */
-const applyAuthModel = authHandler => async (
-  model,
-  defaultAuth,
-  authParams
-) => {
+const applyAuthModel = authHandler => async (defaultAuth, authParams) => {
   let auth = defaultAuth;
   if (authHandler) {
     auth = typeof authHandler === "function" ? authHandler : auth;
     return await auth(authParams);
   }
-  return { isValid: true, credentials: {} };
+  return true;
 };
 
 /**
@@ -81,7 +77,6 @@ const applyAuthModel = authHandler => async (
  * @returns {Object} { error, value }.
  */
 const applyValidateModel = validateHandler => async (
-  model,
   payload,
   validateParams
 ) => {
