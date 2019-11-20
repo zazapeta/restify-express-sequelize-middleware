@@ -22,7 +22,7 @@ const umzug = new Umzug({
 
 async function seed() {
   let errors = false;
-  console.info("starting PROGRAMMATIC MIGRATION...");
+  console.info("starting PROGRAMMATIC SEED...");
   console.info("directory seeder: ", path.join(__dirname, "./seeders"));
   try {
     await umzug.up();
