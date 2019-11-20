@@ -1,5 +1,4 @@
 const express = require("express");
-const Joi = require("@hapi/joi");
 const Boom = require("@hapi/boom");
 
 const {
@@ -7,7 +6,8 @@ const {
   validateModelSelector,
   pathModelSelector,
   authModelSelector,
-  applyAuthModel
+  applyAuthModel,
+  applyValidateModel
 } = require("./utils");
 
 function boomIt(res, b) {
@@ -47,43 +47,29 @@ module.exports = ({
       let resourceData = req.body;
       let boom;
       // - AUTH
-      const { isValid, credentials } = await applyAuthModel(model, auth, {
-        req,
-        verb: "post",
-        path: `/${path}`
-      });
+      const { isValid, credentials } = await applyAuthModel(authCreate)(
+        model,
+        auth,
+        {
+          req,
+          verb: "post",
+          path: `/${path}`
+        }
+      );
       if (!isValid) {
         return boomIt(res, Boom.forbidden("not allowed"));
-      } else {
-        req.app.reactify = { auth: { credentials } };
       }
-
       // - VALIDATE
-      if (validationCreate && typeof validationCreate === "object") {
-        const { error, value } = Joi.object(validationCreate).validate(
-          resourceData
-        );
-        if (error) {
-          boom = Boom.badRequest(error);
-        } else {
-          resourceData = value;
-        }
-      } else if (validationCreate && typeof validationCreate === "function") {
-        // create validator should return a object { error, value }
-        const { error, value } = validationCreate(req, res, next);
-        if (error) {
-          boom = Boom.badRequest(error);
-        } else {
-          resourceData = value;
-        }
+      const { error, value } = await applyValidateModel(validationCreate)(
+        model,
+        resourceData
+      );
+      if (error) {
+        return boomIt(res, Boom.badRequest(error));
       }
-      // - SEND
-      if (boom) {
-        boomIt(res, boom);
-      } else {
-        const createdResource = await model.create(resourceData);
-        res.status(201).json(createdResource);
-      }
+      // SEND
+      const createdResource = await model.create(value);
+      res.status(201).json(createdResource);
     });
 
     /**
