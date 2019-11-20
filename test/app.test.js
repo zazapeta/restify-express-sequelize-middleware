@@ -1,9 +1,10 @@
 const request = require("supertest");
 const express = require("express");
-const assert = require("assert");
+const chai = require("chai");
+const should = chai.should(); // Using Should style
+const expect = chai.expect;
 
-const { sequelize } = require("./db/models");
-const { User, Post } = sequelize.models;
+const { User, Post, sequelize } = require("./db/models");
 const { seed } = require("./db/seed");
 const { migrate } = require("./db/migrate");
 const restify = require("../src");
@@ -25,18 +26,35 @@ before("Test connexion", done => {
 
 function getApp() {
   const app = express();
-  app.use(express.json());
-  app.use(
-    restify({
-      sequelize
-    })
-  );
+  restify({
+    sequelize,
+    app
+  });
   return app;
 }
 
 describe("Routes are added", () => {
   it("should initialize without crashing", done => {
-    getApp();
+    const app = getApp();
+    expect(
+      app._router.stack
+        .filter(layer => layer.route && layer.route.path)
+        .map(layer => ({
+          path: layer.route.path,
+          method: layer.route.stack[0].method
+        }))
+    ).to.have.deep.members([
+      { path: "/posts", method: "post" },
+      { path: "/posts/:id", method: "get" },
+      { path: "/posts", method: "get" },
+      { path: "/posts/:id", method: "put" },
+      { path: "/posts/:id", method: "delete" },
+      { path: "/users", method: "post" },
+      { path: "/users/:id", method: "get" },
+      { path: "/users", method: "get" },
+      { path: "/users/:id", method: "put" },
+      { path: "/users/:id", method: "delete" }
+    ]);
     done();
   });
 
@@ -61,7 +79,7 @@ describe("Routes are added", () => {
         .get(`/users/${users[0].id}`)
         .expect(200)
         .end((err, res) => {
-          assert(res.body.id === users[0].id, "not fetched");
+          expect(res.body.id).to.equal(users[0].id, "not fetched");
           if (err) {
             reject(err);
           } else {
@@ -82,12 +100,31 @@ describe("Routes are added", () => {
         })
         .expect(201)
         .end((err, res) => {
-          console.log(res.body);
-          assert(res.body.id === users[0].id, "not fetched");
-          assert(res.body.username === "xan", "not updated");
           if (err) {
             reject(err);
           } else {
+            expect(res.body.id).to.equal(users[0].id, "not fetched");
+            expect(res.body.username).to.equal("xan", "not updated");
+            resolve();
+          }
+        });
+    });
+  });
+
+  it("should define POST /users", async () => {
+    await new Promise((resolve, reject) => {
+      request(getApp())
+        .post(`/users`)
+        .send({
+          username: "xan"
+        })
+        .expect(201)
+        .end((err, res) => {
+          console.log(res.body);
+          if (err) {
+            reject(err);
+          } else {
+            expect(res.body.username).to.equal("xan", "not updated");
             resolve();
           }
         });

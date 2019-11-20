@@ -12,7 +12,8 @@ module.exports = (sequelize, DataTypes) => {
     Post.belongsTo(models.User);
   };
   Post.restify = {
-    name: "post"
+    name: "post",
+    validate: {}
   };
   return Post;
 };
