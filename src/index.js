@@ -5,46 +5,79 @@ const Boom = require("@hapi/boom");
 const {
   modelsSelector,
   validateModelSelector,
-  pathModelSelector
+  pathModelSelector,
+  authModelSelector
 } = require("./utils");
 
 function boomIt(res, b) {
   res.status(b.output.statusCode).json(b.output.payload);
 }
 
-module.exports = ({ app, sequelize }) => {
+module.exports = ({
+  app,
+  sequelize,
+  auth = () => {
+    throw new Error(
+      "A model try to use auth. You must implement auth option in the constructor"
+    );
+  }
+}) => {
   app.use(express.json());
   modelsSelector(sequelize).forEach(model => {
     const path = pathModelSelector(model);
     const {
-      create,
-      readOne,
-      readlAll,
-      update,
-      delete: deletion
+      create: validationCreate,
+      readOne: validationReadOne,
+      readAll: validationReadAll,
+      update: validationUpdate,
+      delete: validationDelete
     } = validateModelSelector(model);
+    const {
+      create: authCreate,
+      readOne: authReadOne,
+      readAll: authReadAll,
+      update: authUpdate,
+      delete: authDelete
+    } = authModelSelector(model);
     /**
      * CREATE
      */
     app.post(`/${path}`, async (req, res, next) => {
       let resourceData = req.body;
       let boom;
-      if (create && typeof create === "object") {
-        const { error, value } = Joi.object(create).validate(resourceData);
+      // - AUTH
+      let authFn = auth;
+      if (authCreate) {
+        authFn = typeof authCreate === "function" ? authCreate : auth;
+        const isAuth = await authFn({
+          req,
+          verb: "post",
+          path: `/${path}`
+        });
+        if (!isAuth) {
+          return boomIt(res, Boom.forbidden("not allowed"));
+        }
+      }
+      // - VALIDATE
+      if (validationCreate && typeof validationCreate === "object") {
+        const { error, value } = Joi.object(validationCreate).validate(
+          resourceData
+        );
         if (error) {
           boom = Boom.badRequest(error);
         } else {
           resourceData = value;
         }
-      } else if (create && typeof create === "function") {
+      } else if (validationCreate && typeof validationCreate === "function") {
         // create validator should return a object { error, value }
-        const { error, value } = create(req, res, next);
+        const { error, value } = validationCreate(req, res, next);
         if (error) {
           boom = Boom.badRequest(error);
         } else {
           resourceData = value;
         }
       }
+      // - SEND
       if (boom) {
         boomIt(res, boom);
       } else {

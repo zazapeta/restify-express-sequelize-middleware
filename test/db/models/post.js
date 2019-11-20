@@ -13,7 +13,8 @@ module.exports = (sequelize, DataTypes) => {
   };
   Post.restify = {
     name: "post",
-    validate: {}
+    validate: {},
+    auth: {}
   };
   return Post;
 };

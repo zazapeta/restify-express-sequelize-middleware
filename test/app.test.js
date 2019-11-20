@@ -28,13 +28,27 @@ function getApp() {
   const app = express();
   restify({
     sequelize,
-    app
+    app,
+    auth: ({ req, path, verb }) => {
+      /* handle global auth logic here */
+      return false;
+    }
   });
   return app;
 }
 
-describe("Routes are added", () => {
-  it("should initialize without crashing", done => {
+describe("Unit", () => {
+  it.skip("# modelsSelector : Should return a list of models", () => {});
+  it.skip("# validateModelSelector : Should return a validate object", () => {});
+  it.skip("# pathModelSelector : Should return a path string", () => {});
+  it.skip("# authModelSelector : Should return a auth object", () => {});
+});
+
+describe("Restify", () => {
+  it("should initialize without crashing", () => {
+    const app = getApp();
+  });
+  it("Should create a bunch of routes in the app", () => {
     const app = getApp();
     expect(
       app._router.stack
@@ -55,7 +69,46 @@ describe("Routes are added", () => {
       { path: "/users/:id", method: "put" },
       { path: "/users/:id", method: "delete" }
     ]);
-    done();
+  });
+  describe("POST /resources - create", () => {
+    it.skip("# POST /users : should create a particular user", done => {});
+    it.skip("# POST /posts : should create a particular post", done => {});
+    it.skip("# POST /posts : should 'auth option' be called with correct params", () => {});
+  });
+
+  describe("GET /resources - readAll", () => {
+    it("# GET /users : should retrieve all users", done => {
+      request(getApp())
+        .get("/users")
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            done(err);
+          } else {
+            done();
+          }
+        });
+    });
+    it.skip("# GET /posts : should retrieve all posts", done => {});
+    it.skip("# GET /posts : should 'auth option' be called with correct params", () => {});
+  });
+
+  describe("GET /resources/:id - readOne", () => {
+    it.skip("# GET /users/:id : should retrieve a particular user", done => {});
+    it.skip("# GET /posts/:id : should retrieve a particular post", done => {});
+    it.skip("# GET /users/:id : should 'auth option' be called with correct params", () => {});
+  });
+
+  describe("PUT /resources/:id - update", () => {
+    it.skip("# PUT /users/:id : should update a particular user", done => {});
+    it.skip("# PUT /posts/:id : should update a particular post", done => {});
+    it.skip("# PUT /posts/:id : should 'auth option' be called with correct params", () => {});
+  });
+
+  describe("DELETE /resources/:id - update", () => {
+    it.skip("# DELETE /users/:id : should delete a particular user", done => {});
+    it.skip("# DELETE /posts/:id : should delete a particular post", done => {});
+    it.skip("# DELETE /posts/:id : should 'auth option' be called with correct params", () => {});
   });
 
   it("should define GET /users", done => {
@@ -116,7 +169,11 @@ describe("Routes are added", () => {
       request(getApp())
         .post(`/users`)
         .send({
-          username: "xan"
+          firstName: "John",
+          lastName: "Doe",
+          email: "johndoe@demo.com",
+          username: "xan",
+          password: "await auth.hashPassword('unlock')"
         })
         .expect(201)
         .end((err, res) => {

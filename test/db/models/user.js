@@ -20,11 +20,31 @@ module.exports = (sequelize, DataTypes) => {
       create: {
         username: Joi.string()
           .min(1)
-          .max(140),
-        post: Joi.string()
+          .max(140)
+          .required(),
+        firstName: Joi.string()
           .min(1)
           .max(140)
+          .required(),
+        lastName: Joi.string()
+          .min(1)
+          .max(140)
+          .required(),
+        password: Joi.string()
+          .min(1)
+          .max(140)
+          .required(),
+        email: Joi.string()
+          .email()
+          .required()
       }
+    },
+    auth: {
+      create: false,
+      readOne: true /* handle custom auth here -- where to include roles based auth */,
+      readAll: true,
+      update: true,
+      delete: true
     }
   };
   return User;

@@ -32,8 +32,24 @@ function pathModelSelector(model) {
   return model.options.name.plural.toLowerCase();
 }
 
+/**
+* TODO: test it
+* @param {Object} sequelizeModel
+* @returns {Object} an object within {
+     create,
+     readOne,
+     readlAll,
+     update,
+     delete
+   }
+  */
+function authModelSelector({ restify }) {
+  return restify.auth;
+}
+
 module.exports = {
   modelsSelector,
   validateModelSelector,
-  pathModelSelector
+  pathModelSelector,
+  authModelSelector
 };
