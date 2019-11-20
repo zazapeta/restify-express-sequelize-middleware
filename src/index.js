@@ -6,7 +6,8 @@ const {
   modelsSelector,
   validateModelSelector,
   pathModelSelector,
-  authModelSelector
+  authModelSelector,
+  applyAuthModel
 } = require("./utils");
 
 function boomIt(res, b) {
@@ -46,18 +47,17 @@ module.exports = ({
       let resourceData = req.body;
       let boom;
       // - AUTH
-      let authFn = auth;
-      if (authCreate) {
-        authFn = typeof authCreate === "function" ? authCreate : auth;
-        const isAuth = await authFn({
-          req,
-          verb: "post",
-          path: `/${path}`
-        });
-        if (!isAuth) {
-          return boomIt(res, Boom.forbidden("not allowed"));
-        }
+      const { isValid, credentials } = await applyAuthModel(model, auth, {
+        req,
+        verb: "post",
+        path: `/${path}`
+      });
+      if (!isValid) {
+        return boomIt(res, Boom.forbidden("not allowed"));
+      } else {
+        req.app.reactify = { auth: { credentials } };
       }
+
       // - VALIDATE
       if (validationCreate && typeof validationCreate === "object") {
         const { error, value } = Joi.object(validationCreate).validate(

@@ -40,7 +40,7 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     auth: {
-      create: false,
+      create: true,
       readOne: true /* handle custom auth here -- where to include roles based auth */,
       readAll: true,
       update: true,
