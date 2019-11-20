@@ -57,14 +57,14 @@ module.exports = ({ app, sequelize }) => {
      * READ
      */
     // READ ONE
-    app.get(`/${path}/:id`, (req, res, next) => {
-      model.findByPk(req.params.id).then(resource => res.json(resource));
+    app.get(`/${path}/:id`, async (req, res, next) => {
+      const resource = await model.findByPk(req.params.id);
+      res.json(resource);
     });
     // READ ALL
-    app.get(`/${path}`, (req, res, next) => {
-      model.findAll().then(resources => {
-        res.json(resources);
-      });
+    app.get(`/${path}`, async (req, res, next) => {
+      const resources = await model.findAll();
+      res.json(resources);
     });
 
     /**
@@ -86,11 +86,4 @@ module.exports = ({ app, sequelize }) => {
     });
   });
   return app;
-  // (req, res, next) => {
-  //   if (model) {
-  //     console.log(model);
-  //   } else {
-  //     next();
-  //   }
-  // };
 };
