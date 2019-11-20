@@ -44,7 +44,7 @@ module.exports = ({
      * CREATE
      */
     app.post(`/${path}`, async (req, res) => {
-      let resourceData = req.body;
+      let reqBody = req.body;
       // - AUTH
       const isValid = await applyAuthModel(authCreate)(auth, {
         req,
@@ -56,8 +56,7 @@ module.exports = ({
       }
       // - VALIDATE
       const { error, value } = await applyValidateModel(validationCreate)(
-        model,
-        resourceData
+        reqBody
       );
       if (error) {
         return boomIt(res, Boom.badRequest(error));

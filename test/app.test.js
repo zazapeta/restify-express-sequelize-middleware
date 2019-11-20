@@ -31,7 +31,7 @@ function getApp() {
     app,
     auth: ({ req, path, verb }) => {
       /* handle global auth logic here */
-      return { isValid: false, credentials: {} };
+      return true;
     }
   });
   return app;
