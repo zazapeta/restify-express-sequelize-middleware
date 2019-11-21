@@ -1,5 +1,8 @@
+const fs = require("fs");
 const express = require("express");
 const Boom = require("@hapi/boom");
+
+const SpecTransformer = require("./spec-transform");
 
 const {
   modelsSelector,
@@ -46,11 +49,110 @@ module.exports = ({
     throw new Error(
       "A model try to use auth. You must implement auth option in the constructor"
     );
-  }
+  },
+  swagger
 }) => {
   app.use(express.json());
+  let spec = {
+    ...swagger,
+    swagger: "2.0",
+    paths: {},
+    definitions: {}
+  };
+
   modelsSelector(sequelize).forEach(model => {
     const path = pathModelSelector(model);
+    if (swagger) {
+      spec.definitions[model.name] = SpecTransformer(model);
+      spec.paths[`/${path}`] = {
+        post: {
+          tags: [model.name],
+          summary: `Create a new ${model.name}`,
+          parameters: [
+            {
+              in: "body",
+              name: "body",
+              description: `${model.name} object that need to be created`,
+              required: true,
+              schema: { $ref: `#/definitions/${model.name}` }
+            }
+          ],
+          responses: {
+            201: {
+              description: "Created",
+              schema: { $ref: `#/definitions/${model.name}` }
+            },
+            400: { description: "Bad Request - the payload is not validated" },
+            403: { description: "Forbidden - the request is not authentified" }
+          }
+        },
+        get: {
+          tags: [model.name],
+          summary: `List all of ${model.name}`,
+          parameters: [],
+          responses: {
+            200: {
+              description: "Success",
+              schema: {
+                type: "array",
+                items: { $ref: `#/definitions/${model.name}` }
+              }
+            },
+            400: { description: "Bad Request - the payload is not validated" },
+            403: { description: "Forbidden - the request is not authentified" }
+          }
+        }
+      };
+      spec.paths[`/${path}/:id`] = {
+        get: {
+          tags: [model.name],
+          summary: `Read ${model.name} with the given id`,
+          parameters: [],
+          responses: {
+            200: {
+              description: "Success",
+              schema: { $ref: `#/definitions/${model.name}` }
+            },
+            400: { description: "Bad Request - the payload is not validated" },
+            403: { description: "Forbidden - the request is not authentified" }
+          }
+        },
+        put: {
+          tags: [model.name],
+          summary: `Update ${model.name} with the given id and the body attached to`,
+          parameters: [
+            {
+              in: "body",
+              name: "body",
+              description: `${model.name} object that need to be updated`,
+              required: true,
+              schema: { $ref: `#/definitions/${model.name}` }
+            }
+          ],
+          responses: {
+            200: {
+              description: "Success",
+              schema: { $ref: `#/definitions/${model.name}` }
+            },
+            400: { description: "Bad Request - the payload is not validated" },
+            403: { description: "Forbidden - the request is not authentified" }
+          }
+        },
+        delete: {
+          tags: [model.name],
+          summary: `Delete ${model.name} with the given id`,
+          parameters: [],
+          responses: {
+            200: {
+              description: "Success",
+              schema: { $ref: `#/definitions/${model.name}` }
+            },
+            400: { description: "Bad Request - the payload is not validated" },
+            403: { description: "Forbidden - the request is not authentified" }
+          }
+        }
+      };
+    }
     const {
       create: validateCreate,
       readOne: validateReadOne,
@@ -167,5 +269,10 @@ module.exports = ({
       res.json(resource);
     });
   });
+
+  if (swagger) {
+    delete spec.file;
+    fs.writeFileSync(swagger.file, JSON.stringify(spec));
+  }
   return app;
 };

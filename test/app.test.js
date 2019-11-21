@@ -34,6 +34,12 @@ function getApp() {
       req.app.restify = {};
       req.app.restify.user = { isLogged: true };
       return true;
+    },
+    swagger: {
+      info: { title: "API", version: "1.0.0" },
+      host: "localhost",
+      basePath: "/",
+      file: "./spec.json"
     }
   });
   return app;
