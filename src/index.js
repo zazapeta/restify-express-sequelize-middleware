@@ -14,6 +14,24 @@ function boomIt(res, b) {
   res.status(b.output.statusCode).json(b.output.payload);
 }
 
+const authAndValidate = req => async (
+  defaultAuth,
+  authHandler,
+  validateHandler
+) => {
+  // - AUTH
+  const isValid = await applyAuthModel(defaultAuth)(authHandler, req);
+  if (!isValid) {
+    return { error: Boom.forbidden("not allowed"), value: null };
+  }
+  // - VALIDATE
+  const { error, value } = await applyValidateModel(validateHandler, req);
+  if (error) {
+    return { error: Boom.badRequest(error), value: null };
+  }
+  return { error, value };
+};
+
 module.exports = ({
   app,
   sequelize,
@@ -27,11 +45,11 @@ module.exports = ({
   modelsSelector(sequelize).forEach(model => {
     const path = pathModelSelector(model);
     const {
-      create: validationCreate,
-      readOne: validationReadOne,
-      readAll: validationReadAll,
-      update: validationUpdate,
-      delete: validationDelete
+      create: validateCreate,
+      readOne: validateReadOne,
+      readAll: validateReadAll,
+      update: validateUpdate,
+      delete: validateDelete
     } = validateModelSelector(model);
     const {
       create: authCreate,
@@ -40,26 +58,19 @@ module.exports = ({
       update: authUpdate,
       delete: authDelete
     } = authModelSelector(model);
+
     /**
      * CREATE
      */
     app.post(`/${path}`, async (req, res) => {
-      let reqBody = req.body;
-      // - AUTH
-      const isValid = await applyAuthModel(authCreate)(auth, {
-        req,
-        verb: "post",
-        path: `/${path}`
-      });
-      if (!isValid) {
-        return boomIt(res, Boom.forbidden("not allowed"));
-      }
-      // - VALIDATE
-      const { error, value } = await applyValidateModel(validationCreate)(
-        reqBody
+      // AUTH & VALIDATE
+      const { error, value } = await authAndValidate(req)(
+        auth,
+        authCreate,
+        validateCreate
       );
       if (error) {
-        return boomIt(res, Boom.badRequest(error));
+        return boomIt(res, error);
       }
       // SEND
       const createdResource = await model.create(value);

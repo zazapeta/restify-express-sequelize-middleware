@@ -55,14 +55,15 @@ function authModelSelector({ restify }) {
  * 'auth' method MUST return a boolean.
  * @param {Object} sequelizeModel
  * @param {Function} defaultAuth auth method given by the global conf
- * @param {Object} authParams should be an object with {req, verb, path}. It will be passed to the auth method
+ * @param {Function} authHandler auth method given by the model
+ * @param {Object} req express req
  * @returns {Boolean} true if auth is success. false otherwise. Default to true.
  */
-const applyAuthModel = authHandler => async (defaultAuth, authParams) => {
+const applyAuthModel = defaultAuth => async (authHandler, req) => {
   let auth = defaultAuth;
   if (authHandler) {
     auth = typeof authHandler === "function" ? authHandler : auth;
-    return await auth(authParams);
+    return await auth(req);
   }
   return true;
 };
@@ -71,20 +72,16 @@ const applyAuthModel = authHandler => async (defaultAuth, authParams) => {
  * TODO: test it
  * return the result of data validation given by the option.validate, or, if defined, by the model it self.
  * 'validation' method MUST return a {error, value} object.
- * @param {Object} sequelizeModel
- * @param {Function} defaultAuth auth method given by the global conf
- * @param {Object} authParams should be an object with {req, verb, path}. It will be passed to the auth method
+ * @param {Function} validateHandler validate method given by the model
+ * @param {Object} routeParams should be an object with {req, verb, path}. It will be passed to the auth method
  * @returns {Object} { error, value }.
  */
-const applyValidateModel = validateHandler => async (
-  payload,
-  validateParams
-) => {
+const applyValidateModel = async (validateHandler, req) => {
   if (validateHandler && typeof validateHandler === "object") {
-    return Joi.object(validateHandler).validate(payload);
+    return Joi.object(validateHandler).validate(req.body);
   } else if (validateHandler && typeof validateHandler === "function") {
     // create validator should return a object { error, value }
-    return await validateHandler(validateParams);
+    return await validateHandler(req.body);
   } else {
     throw new Error(
       "model.validate.create must be either a Joi scheme or a function that return an object {error, value}"
