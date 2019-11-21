@@ -30,7 +30,9 @@ function getApp() {
     sequelize,
     app,
     auth: req => {
-      /* handle global auth logic here */
+      /* handle global auth logic here -- create user*/
+      req.app.restify = {};
+      req.app.restify.user = { isLogged: true };
       return true;
     }
   });
@@ -205,10 +207,10 @@ describe("Restify", () => {
         .get(`/users/${users[0].id}`)
         .expect(200)
         .end((err, res) => {
-          expect(res.body.id).to.equal(users[0].id, "not fetched");
           if (err) {
             reject(err);
           } else {
+            expect(res.body.id).to.equal(users[0].id, "not fetched");
             resolve();
           }
         });

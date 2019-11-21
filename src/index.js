@@ -96,7 +96,16 @@ module.exports = ({
       res.json(resource);
     });
     // READ ALL
-    app.get(`/${path}`, async (req, res, next) => {
+    app.get(`/${path}`, async (req, res) => {
+      // AUTH & VALIDATE
+      const { error } = await authAndValidate(req)(
+        auth,
+        authReadAll,
+        validateReadAll
+      );
+      if (error) {
+        return boomIt(res, error);
+      }
       const resources = await model.findAll();
       res.json(resources);
     });

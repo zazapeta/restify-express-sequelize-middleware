@@ -60,10 +60,12 @@ function authModelSelector({ restify }) {
  * @returns {Boolean} true if auth is success. false otherwise. Default to true.
  */
 const applyAuthModel = defaultAuth => async (authHandler, req) => {
-  let auth = defaultAuth;
   if (authHandler) {
-    auth = typeof authHandler === "function" ? authHandler : auth;
-    return await auth(req);
+    const authValue = await defaultAuth(req);
+    if (authValue && typeof authHandler === "function") {
+      return authHandler(req);
+    }
+    return authValue;
   }
   return true;
 };

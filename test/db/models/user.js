@@ -38,11 +38,15 @@ module.exports = (sequelize, DataTypes) => {
           .email()
           .required()
       },
-      readOne: {}
+      readOne: {},
+      readAll: {}
     },
     auth: {
-      create: true,
-      readOne: true /* handle custom auth here -- where to include roles based auth */,
+      create: false,
+      readOne: req => {
+        /* handle custom auth here -- where to include roles based auth */
+        return req.app.restify.user.isLogged;
+      },
       readAll: true,
       update: true,
       delete: true
