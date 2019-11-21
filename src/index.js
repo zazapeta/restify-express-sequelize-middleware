@@ -7,17 +7,22 @@ const {
   pathModelSelector,
   authModelSelector,
   applyAuthModel,
-  applyValidateModel
+  applyValidateModel,
+  queryModelSelector
 } = require("./utils");
 
 function boomIt(res, b) {
   res.status(b.output.statusCode).json(b.output.payload);
 }
 
-const authAndValidate = req => async (
+/**
+ * @returns {Object} {error, resource}
+ */
+const authAndValidateAndQuery = req => async (
   defaultAuth,
   authHandler,
-  validateHandler
+  validateHandler,
+  queryHandler
 ) => {
   // - AUTH
   const isValid = await applyAuthModel(defaultAuth)(authHandler, req);
@@ -29,7 +34,9 @@ const authAndValidate = req => async (
   if (error) {
     return { error: Boom.badRequest(error), value: null };
   }
-  return { error, value };
+  // - QUERY
+  const resource = await queryHandler(req, value);
+  return { error, resource };
 };
 
 module.exports = ({
@@ -58,23 +65,39 @@ module.exports = ({
       update: authUpdate,
       delete: authDelete
     } = authModelSelector(model);
-
+    const {
+      create: queryCreate = async (req, value) => model.create(value),
+      readOne: queryReadOne = async (req, value) => {
+        return model.findByPk(req.params.id);
+      },
+      readAll: queryReadAll = async (req, value) => model.findAll(),
+      update: queryUpdate = async (req, value) => {
+        const resource = await model.findByPk(req.params.id);
+        await resource.update(value);
+        return resource;
+      },
+      delete: queryDelete = async (req, value) => {
+        const resource = await model.findByPk(req.params.id);
+        await resource.destroy();
+        return resource;
+      }
+    } = queryModelSelector(model);
     /**
      * CREATE
      */
     app.post(`/${path}`, async (req, res) => {
-      // AUTH & VALIDATE
-      const { error, value } = await authAndValidate(req)(
+      // AUTH & VALIDATE & QUERY
+      const { error, resource } = await authAndValidateAndQuery(req)(
         auth,
         authCreate,
-        validateCreate
+        validateCreate,
+        queryCreate
       );
       if (error) {
         return boomIt(res, error);
       }
       // SEND
-      const createdResource = await model.create(value);
-      res.status(201).json(createdResource);
+      res.status(201).json(resource);
     });
 
     /**
@@ -82,49 +105,65 @@ module.exports = ({
      */
     // READ ONE
     app.get(`/${path}/:id`, async (req, res) => {
-      // AUTH & VALIDATE
-      const { error } = await authAndValidate(req)(
+      // AUTH & VALIDATE & QUERY
+      const { error, resource } = await authAndValidateAndQuery(req)(
         auth,
         authReadOne,
-        validateReadOne
+        validateReadOne,
+        queryReadOne
       );
       if (error) {
         return boomIt(res, error);
       }
       // SEND
-      const resource = await model.findByPk(req.params.id);
       res.json(resource);
     });
     // READ ALL
     app.get(`/${path}`, async (req, res) => {
-      // AUTH & VALIDATE
-      const { error } = await authAndValidate(req)(
+      // AUTH & VALIDATE & QUERY
+      const { error, resource } = await authAndValidateAndQuery(req)(
         auth,
         authReadAll,
-        validateReadAll
+        validateReadAll,
+        queryReadAll
       );
       if (error) {
         return boomIt(res, error);
       }
-      const resources = await model.findAll();
-      res.json(resources);
+      res.json(resource);
     });
 
     /**
      * UPDATE
      */
     app.put(`/${path}/:id`, async (req, res, next) => {
-      let resource = await model.findByPk(req.params.id);
-      await resource.update(req.body);
-      res.status(200).json(resource);
+      // AUTH & VALIDATE & QUERY
+      const { error, resource } = await authAndValidateAndQuery(req)(
+        auth,
+        authUpdate,
+        validateUpdate,
+        queryUpdate
+      );
+      if (error) {
+        return boomIt(res, error);
+      }
+      res.json(resource);
     });
 
     /**
      * DELETE
      */
     app.delete(`/${path}/:id`, async (req, res, next) => {
-      let resource = await model.findByPk(req.params.id);
-      await resource.destroy();
+      // AUTH & VALIDATE & QUERY
+      const { error, resource } = await authAndValidateAndQuery(req)(
+        auth,
+        authDelete,
+        validateDelete,
+        queryDelete
+      );
+      if (error) {
+        return boomIt(res, error);
+      }
       res.json(resource);
     });
   });

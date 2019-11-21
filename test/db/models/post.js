@@ -11,10 +11,7 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     Post.belongsTo(models.User);
   };
-  Post.restify = {
-    name: "post",
-    validate: {},
-    auth: {}
-  };
+  // define it to use it
+  Post.restify = {};
   return Post;
 };

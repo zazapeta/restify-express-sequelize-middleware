@@ -16,6 +16,16 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
   };
   User.restify = {
+    auth: {
+      create: false,
+      readOne: req => {
+        /* handle custom auth here -- where to include roles based auth */
+        return req.app.restify.user.isLogged;
+      },
+      readAll: true,
+      update: true,
+      delete: true
+    },
     validate: {
       create: {
         username: Joi.string()
@@ -39,17 +49,28 @@ module.exports = (sequelize, DataTypes) => {
           .required()
       },
       readOne: {},
-      readAll: {}
-    },
-    auth: {
-      create: false,
-      readOne: req => {
-        /* handle custom auth here -- where to include roles based auth */
-        return req.app.restify.user.isLogged;
+      readAll: {},
+      update: {
+        username: Joi.string()
+          .min(1)
+          .max(140),
+        firstName: Joi.string()
+          .min(1)
+          .max(140),
+        lastName: Joi.string()
+          .min(1)
+          .max(140),
+        password: Joi.string()
+          .min(1)
+          .max(140),
+        email: Joi.string().email()
       },
-      readAll: true,
-      update: true,
-      delete: true
+      delete: {}
+    },
+    query: {
+      create: async (req, value) => {
+        return User.create(value);
+      }
     }
   };
   return User;

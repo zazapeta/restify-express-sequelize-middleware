@@ -3,10 +3,10 @@ const Joi = require("@hapi/joi");
 /**
  * TODO: test it
  * @param {Object} sequelize
- * @returns {Array<sequelize.Model>} list of models
+ * @returns {Array<sequelize.Model>} list of models that have restify property
  */
 function modelsSelector({ models }) {
-  return Object.values(models).filter(model => model.name !== "SequelizeMeta");
+  return Object.values(models).filter(model => model.restify);
 }
 
 /**
@@ -21,17 +21,7 @@ function modelsSelector({ models }) {
     }
  */
 function validateModelSelector({ restify }) {
-  return restify.validate;
-}
-
-/**
- * TODO: test it
- * return path name from a model
- * @param {Object} model
- * @returns {String} the path name
- */
-function pathModelSelector(model) {
-  return model.options.name.plural.toLowerCase();
+  return restify.validate || {};
 }
 
 /**
@@ -46,7 +36,32 @@ function pathModelSelector(model) {
    }
   */
 function authModelSelector({ restify }) {
-  return restify.auth;
+  return restify.auth || {};
+}
+
+/**
+* TODO: test it
+* @param {Object} sequelizeModel
+* @returns {Object} an object within {
+     create,
+     readOne,
+     readlAll,
+     update,
+     delete
+   }
+  */
+function queryModelSelector({ restify }) {
+  return restify.query || {};
+}
+
+/**
+ * TODO: test it
+ * return path name from a model
+ * @param {Object} model
+ * @returns {String} the path name
+ */
+function pathModelSelector(model) {
+  return model.options.name.plural.toLowerCase();
 }
 
 /**
@@ -86,7 +101,7 @@ const applyValidateModel = async (validateHandler, req) => {
     return await validateHandler(req);
   } else {
     throw new Error(
-      "model.validate.handler must be either a Joi scheme or a function that return an object {error, value}"
+      `${req.method} ${req.path} - model.validate.handler must be either a Joi scheme or a function that return an object {error, value}`
     );
   }
 };
@@ -97,5 +112,6 @@ module.exports = {
   pathModelSelector,
   authModelSelector,
   applyAuthModel,
-  applyValidateModel
+  applyValidateModel,
+  queryModelSelector
 };
