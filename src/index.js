@@ -39,6 +39,9 @@ const authAndValidateAndQuery = req => async (
   }
   // - QUERY
   const resource = await queryHandler(req, value);
+  if (!resource) {
+    return { error: Boom.notFound("resource not found"), value: null };
+  }
   return { error, resource };
 };
 
@@ -114,7 +117,8 @@ module.exports = ({
               schema: { $ref: `#/definitions/${model.name}` }
             },
             400: { description: "Bad Request - the payload is not validated" },
-            403: { description: "Forbidden - the request is not authentified" }
+            403: { description: "Forbidden - the request is not authentified" },
+            404: { description: " Not Found - the given id is not reachable" }
           }
         },
         put: {
@@ -135,7 +139,8 @@ module.exports = ({
               schema: { $ref: `#/definitions/${model.name}` }
             },
             400: { description: "Bad Request - the payload is not validated" },
-            403: { description: "Forbidden - the request is not authentified" }
+            403: { description: "Forbidden - the request is not authentified" },
+            404: { description: " Not Found - the given id is not reachable" }
           }
         },
         delete: {
@@ -148,7 +153,8 @@ module.exports = ({
               schema: { $ref: `#/definitions/${model.name}` }
             },
             400: { description: "Bad Request - the payload is not validated" },
-            403: { description: "Forbidden - the request is not authentified" }
+            403: { description: "Forbidden - the request is not authentified" },
+            404: { description: " Not Found - the given id is not reachable" }
           }
         }
       };

@@ -100,9 +100,7 @@ const applyValidateModel = async (validateHandler, req) => {
     // create validator should return a object { error, value }
     return await validateHandler(req);
   } else {
-    throw new Error(
-      `${req.method} ${req.path} - model.validate.handler must be either a Joi scheme or a function that return an object {error, value}`
-    );
+    return { error: null, value: req.body };
   }
 };
 

@@ -68,6 +68,7 @@ module.exports = (sequelize, DataTypes) => {
       delete: {}
     },
     query: {
+      /* a query should return something - otherwise, a 404 not found will be send */
       create: async (req, value) => {
         return User.create(value);
       }
