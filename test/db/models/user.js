@@ -16,6 +16,7 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
   };
   User.restify = {
+    /** Make custom auth/role here */
     auth: {
       create: false,
       readOne: req => {
@@ -26,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
       update: true,
       delete: true
     },
+    /** Make custom validation here */
     validate: {
       create: {
         username: Joi.string()
@@ -48,8 +50,6 @@ module.exports = (sequelize, DataTypes) => {
           .email()
           .required()
       },
-      readOne: {},
-      readAll: {},
       update: {
         username: Joi.string()
           .min(1)
@@ -64,9 +64,9 @@ module.exports = (sequelize, DataTypes) => {
           .min(1)
           .max(140),
         email: Joi.string().email()
-      },
-      delete: {}
+      }
     },
+    /** Make custom query here */
     query: {
       /* a query should return something - otherwise, a 404 not found will be send */
       create: async (req, value) => {
