@@ -108,7 +108,7 @@ describe("Restify", () => {
     });
 
     it("#POST /users : should return Bad Request as the payload is not satisfied", async () => {
-      await new Promise((resolve, reject) => {
+      await new Promise(resolve => {
         request(getApp())
           .post(`/users`)
           .send({
@@ -117,13 +117,7 @@ describe("Restify", () => {
             password: "await auth.hashPassword('unlock')"
           })
           .expect(400)
-          .end((err, res) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve();
-            }
-          });
+          .end(resolve);
       });
     });
   });
@@ -146,7 +140,34 @@ describe("Restify", () => {
   });
 
   describe("GET /resources/:id - readOne", () => {
-    it.skip("# GET /users/:id : should retrieve a particular user", done => {});
+    it("# GET /users/:id : should retrieve a particular user", async () => {
+      const users = await User.findAll();
+
+      await new Promise((resolve, reject) => {
+        request(getApp())
+          .get(`/users/${users[0].id}`)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              expect(res.body.id).to.equal(users[0].id, "not fetched");
+              resolve();
+            }
+          });
+      });
+    });
+    it("# GET /users/:id : should respond Bad Request as the payload is not empty", async () => {
+      const users = await User.findAll();
+
+      await new Promise(resolve => {
+        request(getApp())
+          .get(`/users/${users[0].id}`)
+          .send({ test: 1 })
+          .expect(400)
+          .end(resolve);
+      });
+    });
     it.skip("# GET /posts/:id : should retrieve a particular post", done => {});
     it.skip("# GET /users/:id : should 'auth option' be called with correct params", () => {});
   });

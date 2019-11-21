@@ -37,7 +37,8 @@ module.exports = (sequelize, DataTypes) => {
         email: Joi.string()
           .email()
           .required()
-      }
+      },
+      readOne: {}
     },
     auth: {
       create: true,

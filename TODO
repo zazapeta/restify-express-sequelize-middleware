@@ -2,12 +2,13 @@
 Todo:
   ☐ Crud
     ☐ GET /
-    ☐ GET/:id
+    ✔ GET/:id @done(19-11-21 12:07)
     ☐ PUT /:id
     ☐ DEL /:id
-    ☐ POST /
+    ✔ POST / @done(19-11-21 11:58)
   ☐ Auth
   ☐ Roles
+  ☐ Validate
   ☐ Swagger
   ☐ QueryString
   ☐ Custom Controller (Hook) - onCreate(req, res, next)

@@ -81,7 +81,17 @@ module.exports = ({
      * READ
      */
     // READ ONE
-    app.get(`/${path}/:id`, async (req, res, next) => {
+    app.get(`/${path}/:id`, async (req, res) => {
+      // AUTH & VALIDATE
+      const { error } = await authAndValidate(req)(
+        auth,
+        authReadOne,
+        validateReadOne
+      );
+      if (error) {
+        return boomIt(res, error);
+      }
+      // SEND
       const resource = await model.findByPk(req.params.id);
       res.json(resource);
     });

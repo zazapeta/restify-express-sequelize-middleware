@@ -84,7 +84,7 @@ const applyValidateModel = async (validateHandler, req) => {
     return await validateHandler(req);
   } else {
     throw new Error(
-      "model.validate.create must be either a Joi scheme or a function that return an object {error, value}"
+      "model.validate.handler must be either a Joi scheme or a function that return an object {error, value}"
     );
   }
 };
