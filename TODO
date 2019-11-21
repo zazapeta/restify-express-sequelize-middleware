@@ -1,14 +1,16 @@
 
 Todo:
   ☐ Crud
-    ☐ GET /
+    ✔ GET / @done(19-11-21 15:15)
     ✔ GET/:id @done(19-11-21 12:07)
-    ☐ PUT /:id
-    ☐ DEL /:id
+    ✔ PUT /:id @done(19-11-21 15:15)
+    ✔ DEL /:id @done(19-11-21 15:15)
     ✔ POST / @done(19-11-21 11:58)
-  ☐ Auth
-  ☐ Roles
-  ☐ Validate
-  ☐ Swagger
+  ✔ Auth @done(19-11-21 15:15)
+  ✔ Roles @done(19-11-21 15:15)
+  ✔ Validate @done(19-11-21 15:16)
+  ✔ Swagger @done(19-11-21 15:16)
   ☐ QueryString
   ☐ Custom Controller (Hook) - onCreate(req, res, next)
+  ☐ Documentation
+req -> Global auth -> Model auth -> Model validate || default -> Model query || default -> res
