@@ -29,7 +29,7 @@ function getApp() {
   restify({
     sequelize,
     app,
-    auth: ({ req, path, verb }) => {
+    auth: req => {
       /* handle global auth logic here */
       return true;
     }
@@ -74,6 +74,58 @@ describe("Restify", () => {
     it.skip("# POST /users : should create a particular user", done => {});
     it.skip("# POST /posts : should create a particular post", done => {});
     it.skip("# POST /posts : should 'auth option' be called with correct params", () => {});
+    it("#POST /users : should return created user as the payload is satisfied", async () => {
+      await new Promise((resolve, reject) => {
+        request(getApp())
+          .post(`/users`)
+          .send({
+            firstName: "John",
+            lastName: "Doe",
+            email: "johndoe@demo.com",
+            username: "xan",
+            password: "await auth.hashPassword('unlock')"
+          })
+          .expect(201)
+          .end((err, res) => {
+            console.log(res.body);
+            if (err) {
+              reject(err);
+            } else {
+              expect(res.body).to.include(
+                {
+                  firstName: "John",
+                  lastName: "Doe",
+                  email: "johndoe@demo.com",
+                  username: "xan",
+                  password: "await auth.hashPassword('unlock')"
+                },
+                "not created"
+              );
+              resolve();
+            }
+          });
+      });
+    });
+
+    it("#POST /users : should return Bad Request as the payload is not satisfied", async () => {
+      await new Promise((resolve, reject) => {
+        request(getApp())
+          .post(`/users`)
+          .send({
+            email: "johndoe@demo.com",
+            username: "xan",
+            password: "await auth.hashPassword('unlock')"
+          })
+          .expect(400)
+          .end((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve();
+            }
+          });
+      });
+    });
   });
 
   describe("GET /resources - readAll", () => {
@@ -151,36 +203,12 @@ describe("Restify", () => {
         .send({
           username: "xan"
         })
-        .expect(201)
+        .expect(200)
         .end((err, res) => {
           if (err) {
             reject(err);
           } else {
             expect(res.body.id).to.equal(users[0].id, "not fetched");
-            expect(res.body.username).to.equal("xan", "not updated");
-            resolve();
-          }
-        });
-    });
-  });
-
-  it("should define POST /users", async () => {
-    await new Promise((resolve, reject) => {
-      request(getApp())
-        .post(`/users`)
-        .send({
-          firstName: "John",
-          lastName: "Doe",
-          email: "johndoe@demo.com",
-          username: "xan",
-          password: "await auth.hashPassword('unlock')"
-        })
-        .expect(201)
-        .end((err, res) => {
-          console.log(res.body);
-          if (err) {
-            reject(err);
-          } else {
             expect(res.body.username).to.equal("xan", "not updated");
             resolve();
           }
