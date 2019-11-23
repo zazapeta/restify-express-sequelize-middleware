@@ -13,4 +13,5 @@ Todo:
   ☐ QueryString
   ☐ Custom Controller (Hook) - onCreate(req, res, next)
   ☐ Documentation
+  ☐ remove authModel passwordKey in every response - that should not be sent
 req -> Global auth -> Model auth -> Model validate || default -> Model query || default -> res
