@@ -66,27 +66,6 @@ function pathModelSelector(model) {
 
 /**
  * TODO: test it
- * return the result of auth given by the option.auth, or, if defined, by the model it self.
- * 'auth' method MUST return a boolean.
- * @param {Object} sequelizeModel
- * @param {Function} defaultAuth auth method given by the global conf
- * @param {Function} authHandler auth method given by the model
- * @param {Object} req express req
- * @returns {Boolean} true if auth is success. false otherwise. Default to true.
- */
-const applyAuthModel = defaultAuth => async (authHandler, req) => {
-  if (authHandler) {
-    const authValue = await defaultAuth(req);
-    if (authValue && typeof authHandler === "function") {
-      return authHandler(req);
-    }
-    return authValue;
-  }
-  return true;
-};
-
-/**
- * TODO: test it
  * return the result of data validation given by the option.validate, or, if defined, by the model it self.
  * 'validation' method MUST return a {error, value} object.
  * @param {Function} validateHandler validate method given by the model
@@ -109,7 +88,6 @@ module.exports = {
   validateModelSelector,
   pathModelSelector,
   authModelSelector,
-  applyAuthModel,
-  applyValidateModel,
-  queryModelSelector
+  queryModelSelector,
+  applyValidateModel
 };

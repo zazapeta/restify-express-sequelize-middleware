@@ -27,6 +27,7 @@ async function seed() {
   try {
     await umzug.up();
   } catch (err) {
+    console.log(err);
     console.error("An error occur during the seed : ", err.message);
     errors = true;
   }

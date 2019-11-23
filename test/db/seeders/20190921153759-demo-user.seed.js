@@ -1,5 +1,6 @@
+const { hashPassword } = require("../../../src/auth");
 module.exports = {
-  up: (queryInterface /* , Sequelize */) =>
+  up: async (queryInterface /* , Sequelize */) =>
     queryInterface.bulkInsert(
       "Users",
       [
@@ -8,7 +9,7 @@ module.exports = {
           lastName: "Doe",
           email: "johndoe@demo.com",
           username: "johndoe",
-          password: "await auth.hashPassword('unlock')",
+          password: await hashPassword("unlock"),
           createdAt: new Date(),
           updatedAt: new Date()
         },
@@ -17,7 +18,7 @@ module.exports = {
           lastName: "musk",
           email: "elonmusk@demo.com",
           username: "elonmusk",
-          password: "await auth.hashPassword('spacex')",
+          password: await hashPassword("spacex"),
           createdAt: new Date(),
           updatedAt: new Date()
         },
@@ -26,7 +27,7 @@ module.exports = {
           lastName: "Bezos",
           email: "jeffbezos@demo.com",
           username: "jeffbezos",
-          password: "await auth.hashPassword('amazon')",
+          password: await hashPassword("amazon"),
           createdAt: new Date(),
           updatedAt: new Date()
         }

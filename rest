@@ -1,0 +1,40 @@
+POST http://localhost:3000/login HTTP/1.1
+content-type: application/json
+
+{
+    "email": "elonmusk@demo.com",
+    "password": "spacex"
+}
+
+###
+
+GET http://localhost:3000/users HTTP/1.1
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJlbG9ubXVzayIsImZpcnN0TmFtZSI6IkVsb24iLCJsYXN0TmFtZSI6Im11c2siLCJlbWFpbCI6ImVsb25tdXNrQGRlbW8uY29tIiwiY3JlYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwidXBkYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwiaWF0IjoxNTc0NTA5MTM5fQ.T1eLtqIdPdiVSQI73lRlEHQd7cFGsRbgUbQYhYnEF0w
+
+###
+
+POST http://localhost:3000/posts HTTP/1.1
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJlbG9ubXVzayIsImZpcnN0TmFtZSI6IkVsb24iLCJsYXN0TmFtZSI6Im11c2siLCJlbWFpbCI6ImVsb25tdXNrQGRlbW8uY29tIiwiY3JlYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwidXBkYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwiaWF0IjoxNTc0NTA5MTM5fQ.T1eLtqIdPdiVSQI73lRlEHQd7cFGsRbgUbQYhYnEF0w
+
+{ 
+    "title":"lol",
+    "message": "YEYEEY"
+}
+
+###
+
+GET http://localhost:3000/users/10 HTTP/1.1
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJlbG9ubXVzayIsImZpcnN0TmFtZSI6IkVsb24iLCJsYXN0TmFtZSI6Im11c2siLCJlbWFpbCI6ImVsb25tdXNrQGRlbW8uY29tIiwiY3JlYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwidXBkYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwiaWF0IjoxNTc0NTA5MTM5fQ.T1eLtqIdPdiVSQI73lRlEHQd7cFGsRbgUbQYhYnEF0w
+
+###
+
+PUT http://localhost:3000/users/10 HTTP/1.1
+content-type: application/json
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwidXNlcm5hbWUiOiJlbG9ubXVzayIsImZpcnN0TmFtZSI6IkVsb24iLCJsYXN0TmFtZSI6Im11c2siLCJlbWFpbCI6ImVsb25tdXNrQGRlbW8uY29tIiwiY3JlYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwidXBkYXRlZEF0IjoiMjAxOS0xMS0yM1QxMTozODo0Mi4yNDZaIiwiaWF0IjoxNTc0NTA5MTM5fQ.T1eLtqIdPdiVSQI73lRlEHQd7cFGsRbgUbQYhYnEF0w
+
+{
+    "fdf":"456456456"
+}

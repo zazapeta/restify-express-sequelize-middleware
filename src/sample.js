@@ -1,9 +1,10 @@
 const express = require("express");
+const cors = require("cors");
 
-const { User, Post, sequelize } = require("./db/models");
-const { seed } = require("./db/seed");
-const { migrate } = require("./db/migrate");
-const restify = require("../src");
+const { User, Post, sequelize } = require("../test/db/models");
+const { seed } = require("../test/db/seed");
+const { migrate } = require("../test/db/migrate");
+const restify = require(".");
 
 sequelize
   .sync({ force: true })
@@ -12,14 +13,17 @@ sequelize
   .then(() => {
     console.log("Synced has been established successfully.");
     const app = express();
+    app.use(cors());
     restify({
       sequelize,
       app,
-      auth: req => {
-        /* handle global auth logic here -- create user*/
-        req.app.restify = {};
-        req.app.restify.user = { isLogged: true };
-        return true;
+      auth: {
+        secret: "my holly secret should be an env var",
+        loginRoute: { method: "post", path: "/login" },
+        model: User,
+        identityKey: "email",
+        passwordKey: "password",
+        headersKey: "authorization"
       },
       swagger: {
         info: { title: "API", version: "1.0.0" },
