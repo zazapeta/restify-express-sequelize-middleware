@@ -144,7 +144,7 @@ describe("Restify", () => {
     });
   });
   describe("POST /resources - create", () => {
-    it("# POST /users : should authenticate and create a particular user and hash his password", async () => {
+    it("# POST /users : should authenticate and create a particular user and hash his password and retrieve a token for the new user", async () => {
       const token = await getToken("johndoe@demo.com", "unlock");
       let createdUserId = await new Promise((resolve, reject) => {
         request(getApp())
@@ -178,42 +178,11 @@ describe("Restify", () => {
       });
       const createdUser = await User.findByPk(createdUserId);
       expect(createdUser.password).to.not.eq("toto");
+      const createdUserToken = await getToken("marc.billal@gmail.com", "toto");
+      expect(createdUserToken).to.exist;
     });
     it.skip("# POST /posts : should create a particular post", done => {});
     it.skip("# POST /posts : should 'auth option' be called with correct params", () => {});
-    it("#POST /users : should return created user as the payload is satisfied", async () => {
-      await new Promise((resolve, reject) => {
-        request(getApp())
-          .post(`/users`)
-          .send({
-            firstName: "John",
-            lastName: "Doe",
-            email: "johndoe@demo.com",
-            username: "xan",
-            password: "await auth.hashPassword('unlock')"
-          })
-          .expect(201)
-          .end((err, res) => {
-            console.log(res.body);
-            if (err) {
-              reject(err);
-            } else {
-              expect(res.body).to.include(
-                {
-                  firstName: "John",
-                  lastName: "Doe",
-                  email: "johndoe@demo.com",
-                  username: "xan",
-                  password: "await auth.hashPassword('unlock')"
-                },
-                "not created"
-              );
-              resolve();
-            }
-          });
-      });
-    });
-
     it("#POST /users : should return Bad Request as the payload is not satisfied", async () => {
       await new Promise(resolve => {
         request(getApp())
