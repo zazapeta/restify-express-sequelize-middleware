@@ -12,7 +12,7 @@ Todo:
   ✔ Swagger @done(19-11-21 15:16)
   ☐ QueryString
   ☐ Custom Controller (Hook) - onCreate(req, res, next)
-  ☐ Documentation
+  ☐ Documentation : https://docusaurus.io/
   ✔ remove authModel passwordKey in every response - that should not be sent @done(19-11-24 13:30)
   ✔ hash Password on /POST auth model @done(19-11-24 13:39)
 
