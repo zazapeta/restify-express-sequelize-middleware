@@ -59,6 +59,9 @@ module.exports = (sequelize, DataTypes) => {
         email: Joi.string().email()
       }
     },
+    auth: {
+      readAll: () => true
+    },
     /** Make custom query here */
     query: {
       /* a query should return something - otherwise, a 404 not found will be send */

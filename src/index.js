@@ -47,14 +47,19 @@ const authAndValidateAndQuery = req => async (
 };
 
 module.exports = ({ app, sequelize, auth, swagger }) => {
+  // --------------------------
+  // #region RESTIFY APP
+  // --------------------------
+  // BODY PARSER
   app.use(express.json());
+  // RESTIFY INIT APP
   app.use((req, res, next) => {
     if (!req.app.restify) {
       req.app.restify = {};
     }
     next();
   });
-
+  // AUTH PARSER
   const {
     loginRoute: { method, path },
     secret,
@@ -63,14 +68,29 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
     passwordKey,
     headersKey
   } = auth;
+  // AUTH MODEL WRAPPER - DECORATOR - REMOVAL PASSWORD KEY
+  class AuthModel extends authModel {
+    static create(values) {
+      if (values[passwordKey]) {
+        const hashedPassword = hashPassword(values[passwordKey]);
+        return super.create({ ...values, [passwordKey]: hashedPassword });
+      }
+      return super.create(values);
+    }
 
+    toJSON() {
+      const copyOfTheResource = super.toJSON();
+      delete copyOfTheResource[passwordKey];
+      return copyOfTheResource;
+    }
+  }
   // POST /login
   app[method](path, async (req, res) => {
     const { [identityKey]: email, [passwordKey]: password } = req.body;
     if (!email || !password) {
       return boomIt(res, Boom.unauthorized("email or password is missing"));
     }
-    const user = await authModel.findOne({ where: { [identityKey]: email } });
+    const user = await AuthModel.findOne({ where: { [identityKey]: email } });
     if (!user) {
       return boomIt(
         res,
@@ -85,20 +105,18 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
       );
     }
     // sign with default (HMAC SHA256)
-    const jwtUser = user.toJSON();
-    delete jwtUser[passwordKey];
     res.json({
-      token: jsonWebToken.sign(jwtUser, secret)
+      token: jsonWebToken.sign(user.toJSON(), secret)
     });
   });
-
+  // DEFAULT AUTH HANDLER : If model is not providing a auth.create - it wiil use this one in place of.
   const defaultAuthHandler = async req => {
     const reqToken = req.headers[headersKey];
     if (reqToken) {
       try {
         const jwtUser = jsonWebToken.verify(reqToken, secret);
         if (jwtUser && jwtUser[identityKey]) {
-          const user = await authModel.findOne({
+          const user = await AuthModel.findOne({
             where: { [identityKey]: jwtUser[identityKey] }
           });
           if (user) {
@@ -112,16 +130,34 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
     }
     return false;
   };
-
+  // --------------------------
+  // #region SWAGGER BASE
+  // --------------------------
   const spec = {
     ...swagger,
     swagger: "2.0",
     paths: {},
     definitions: {}
   };
+  // --------------------------
+  // #endregion SWAGGER BASE
+  // --------------------------
+  // --------------------------
+  // #endregion RESTIFY APP
+  // --------------------------
 
-  modelsSelector(sequelize).forEach(model => {
+  // --------------------------
+  // #region RESTIFY MODELS LOOP
+  // --------------------------
+  modelsSelector(sequelize).forEach(sequelizeModel => {
+    // use the decorated auth model if the current model is the 'authModel' to avoid using nativ .toJSON.
+    // We have to use the new .toJSON to ensure password are remove from responses
+    const model = sequelizeModel === authModel ? AuthModel : sequelizeModel;
+
     const path = pathModelSelector(model);
+    // --------------------------
+    // #region SWAGGER GENERATION
+    // --------------------------
     if (swagger) {
       spec.definitions[model.name] = SpecTransformer(model);
       spec.paths[`/${path}`] = {
@@ -216,6 +252,14 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
         }
       };
     }
+    // --------------------------
+    // #endregion SWAGGER GENERATION
+    // --------------------------
+
+    // --------------------------
+    // #region MODEL restify options
+    // --------------------------
+    // model.auth parser
     const {
       create: authCreate = defaultAuthHandler,
       readOne: authReadOne = defaultAuthHandler,
@@ -223,6 +267,7 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
       update: authUpdate = defaultAuthHandler,
       delete: authDelete = defaultAuthHandler
     } = authModelSelector(model);
+    // model.validate parser
     const {
       create: validateCreate,
       readOne: validateReadOne,
@@ -230,25 +275,11 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
       update: validateUpdate,
       delete: validateDelete
     } = validateModelSelector(model);
+    // model.query parser
     const {
-      create: queryCreate = async (req, value) => {
-        const resourceToCreate = { ...value };
-        if (model === authModel) {
-          resourceToCreate[passwordKey] = hashPassword(
-            resourceToCreate[passwordKey]
-          );
-        }
-        const resource = await model.create(resourceToCreate);
-        const resourceToSend = resource.toJSON();
-        if (model === authModel) {
-          delete resourceToSend[passwordKey];
-        }
-        return resourceToSend;
-      },
-      readOne: queryReadOne = async (req, value) => {
-        return model.findByPk(req.params.id);
-      },
-      readAll: queryReadAll = async (req, value) => model.findAll(),
+      create: queryCreate = async (_, value) => model.create(value),
+      readOne: queryReadOne = async req => model.findByPk(req.params.id),
+      readAll: queryReadAll = async () => model.findAll(),
       update: queryUpdate = async (req, value) => {
         const resource = await model.findByPk(req.params.id);
         if (resource) {
@@ -256,7 +287,7 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
         }
         return resource;
       },
-      delete: queryDelete = async (req, value) => {
+      delete: queryDelete = async req => {
         const resource = await model.findByPk(req.params.id);
         if (resource) {
           await resource.destroy();
@@ -264,6 +295,13 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
         return resource;
       }
     } = queryModelSelector(model);
+    // --------------------------
+    // #endregion MODEL restify options
+    // --------------------------
+
+    // --------------------------
+    // #region ROUTES MODEL
+    // --------------------------
     /**
      * CREATE
      */
@@ -343,11 +381,25 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
       }
       res.json(resource);
     });
-  });
 
+    // --------------------------
+    // #endregion ROUTES MODEL
+    // --------------------------
+  });
+  // --------------------------
+  // #endregion RESTIFY MODELS LOOP
+  // --------------------------
+
+  // --------------------------
+  // #region SWAGGER FILE
+  // --------------------------
   if (swagger) {
     delete spec.file;
     fs.writeFileSync(swagger.file, JSON.stringify(spec));
   }
+  // --------------------------
+  // #endregion SWAGGER FILE
+  // --------------------------
+
   return app;
 };

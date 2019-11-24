@@ -144,9 +144,9 @@ describe("Restify", () => {
     });
   });
   describe("POST /resources - create", () => {
-    it("# POST /users : should authenticate and create a particular user", async () => {
+    it("# POST /users : should authenticate and create a particular user and hash his password", async () => {
       const token = await getToken("johndoe@demo.com", "unlock");
-      await new Promise((resolve, reject) => {
+      let createdUserId = await new Promise((resolve, reject) => {
         request(getApp())
           .post("/users")
           .set("authorization", token)
@@ -159,7 +159,6 @@ describe("Restify", () => {
           })
           .expect(201)
           .end((err, res) => {
-            console.log(res.body);
             if (err) {
               reject(err);
             } else {
@@ -173,10 +172,12 @@ describe("Restify", () => {
                 },
                 "not created"
               );
-              resolve();
+              resolve(res.body.id);
             }
           });
       });
+      const createdUser = await User.findByPk(createdUserId);
+      expect(createdUser.password).to.not.eq("toto");
     });
     it.skip("# POST /posts : should create a particular post", done => {});
     it.skip("# POST /posts : should 'auth option' be called with correct params", () => {});
@@ -228,18 +229,26 @@ describe("Restify", () => {
     });
   });
 
-  describe.skip("GET /resources - readAll", () => {
-    it("# GET /users : should retrieve all users", done => {
-      request(getApp())
-        .get("/users")
-        .expect(200)
-        .end((err, res) => {
-          if (err) {
-            done(err);
-          } else {
-            done();
-          }
-        });
+  describe("GET /resources - readAll", () => {
+    it("# GET /users : should retrieve all users using no token as auth.readAll is free access + no passwords in the response", async () => {
+      const users = (await User.findAll()).map(user => {
+        const d = user.toJSON();
+        delete d.password;
+        return JSON.parse(JSON.stringify(d));
+      });
+      return new Promise((resolve, reject) => {
+        request(getApp())
+          .get("/users")
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              expect(res.body).to.have.deep.members(users);
+              resolve();
+            }
+          });
+      });
     });
     it.skip("# GET /posts : should retrieve all posts", done => {});
     it.skip("# GET /posts : should 'auth option' be called with correct params", () => {});
