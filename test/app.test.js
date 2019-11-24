@@ -157,6 +157,64 @@ describe("Restify", () => {
       });
     });
   });
+
+  describe("Errors", () => {
+    it("# 403 : Should get a 403 for the listed private routes", async () => {
+      const privateRoutes = [
+        { path: "/posts", method: "post" },
+        { path: "/posts/:id", method: "get" },
+        { path: "/posts", method: "get" },
+        { path: "/posts/:id", method: "put" },
+        { path: "/posts/:id", method: "delete" },
+        { path: "/users", method: "post" },
+        { path: "/users/:id", method: "get" },
+        /* public { path: "/users", method: "get" }, */
+        { path: "/users/:id", method: "put" },
+        { path: "/users/:id", method: "delete" }
+      ];
+      await Promise.all(
+        privateRoutes.map(
+          ({ path, method }) =>
+            new Promise((resolve, reject) =>
+              request(getApp())
+                [method](path)
+                .expect(403)
+                .end(err => (err ? reject(err) : resolve()))
+            )
+        )
+      );
+    });
+    it.only("# 404 : Should get a 404 for the not reachable private routes", async () => {
+      const token = await getToken("johndoe@demo.com", "unlock");
+      const routes = [
+        { path: "/posts/123", method: "get" },
+        { path: "/posts/456", method: "put" },
+        { path: "/posts/789", method: "delete" },
+        { path: "/users/101112", method: "get" },
+        /* modified in the model { path: "/users/131415", method: "put" },*/
+        { path: "/users/161718", method: "delete" }
+      ];
+      await Promise.all(
+        routes.map(
+          ({ path, method }) =>
+            new Promise((resolve, reject) =>
+              request(getApp())
+                [method](path)
+                .set("authorization", token)
+                .expect(404)
+                .end(err => {
+                  if (err) {
+                    console.log(path, method, err);
+                    reject(err);
+                  } else {
+                    resolve();
+                  }
+                })
+            )
+        )
+      );
+    });
+  });
   describe("POST /resources - create", () => {
     it("# POST /users : should authenticate and create a particular user and hash his password and retrieve a token for the new user", async () => {
       const token = await getToken("johndoe@demo.com", "unlock");
@@ -253,7 +311,6 @@ describe("Restify", () => {
       });
       expect(requestedPosts).to.deep.members(posts);
     });
-    it.skip("# GET /posts : should 'auth option' be called with correct params", () => {});
   });
 
   describe("GET /resources/:id - readOne", () => {
