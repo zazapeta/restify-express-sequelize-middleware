@@ -37,6 +37,10 @@ function getApp() {
       passwordKey: "password",
       headersKey: "authorization"
     },
+    identity: {
+      foreignKey: "UserId",
+      identityKey: "id"
+    },
     swagger: {
       info: { title: "API", version: "1.0.0" },
       host: "localhost",
@@ -280,7 +284,7 @@ describe("Restify", () => {
       const createdUserToken = await getToken("marc.billal@gmail.com", "toto");
       expect(createdUserToken).to.exist;
     });
-    it("# POST /posts : should create a particular post", async () => {
+    it("# POST /posts : should create a particular post for a particular User", async () => {
       const user = await User.findOne({ where: { email: "johndoe@demo.com" } });
       const token = await getToken("johndoe@demo.com", "unlock");
       const createdPost = await new Promise((resolve, reject) => {

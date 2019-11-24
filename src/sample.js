@@ -25,6 +25,10 @@ sequelize
         passwordKey: "password",
         headersKey: "authorization"
       },
+      identity: {
+        foreignKey: "UserId",
+        identityKey: "id"
+      },
       swagger: {
         info: { title: "API", version: "1.0.0" },
         host: "localhost:3000",

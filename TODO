@@ -3,16 +3,17 @@ Todo:
   ☐ Crud
     ✔ GET / @done(19-11-21 15:15)
     ✔ GET/:id @done(19-11-21 12:07)
-    ✔ PUT /:id @done(19-11-21 15:15)
-    ✔ DEL /:id @done(19-11-21 15:15)
+    ☐ PUT /:id - missing tests
+    ☐ DEL /:id - missing tests
     ✔ POST / @done(19-11-21 11:58)
   ✔ Auth @done(19-11-21 15:15)
   ✔ Roles @done(19-11-21 15:15)
   ✔ Validate @done(19-11-21 15:16)
   ✔ Swagger @done(19-11-21 15:16)
   ☐ QueryString
-  ☐ Custom Controller (Hook) - onCreate(req, res, next)
+  ☐ ?? Custom Controller (Hook) - onCreate(req, res, next) ??
   ☐ Documentation : https://docusaurus.io/
+  ☐ Identity model
   ✔ remove authModel passwordKey in every response - that should not be sent @done(19-11-24 13:30)
   ✔ hash Password on /POST auth model @done(19-11-24 13:39)
 

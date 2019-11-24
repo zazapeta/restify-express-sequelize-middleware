@@ -46,7 +46,7 @@ const authAndValidateAndQuery = req => async (
   return { error, resource };
 };
 
-module.exports = ({ app, sequelize, auth, swagger }) => {
+module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
   // --------------------------
   // #region RESTIFY APP
   // --------------------------
@@ -278,9 +278,29 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
       update: validateUpdate,
       delete: validateDelete
     } = validateModelSelector(model);
+
+    // AUTH PARSER
+    const {
+      // TODO : finish it
+      identityKey: identityIdentityKey = null,
+      foreignKey: identityForeignKey
+    } = identity;
     // model.query parser
     const {
-      create: queryCreate = async (_, value) => model.create(value),
+      create: queryCreate = async (req, value) => {
+        if (
+          identityForeignKey &&
+          req.app.restify.auth.isLogged &&
+          req.app.restify.auth.user
+        ) {
+          return model.create({
+            ...value,
+            [identityForeignKey]: req.app.restify.auth.user[identityIdentityKey]
+          });
+        } else {
+          return model.create(value);
+        }
+      },
       readOne: queryReadOne = async req => model.findByPk(req.params.id),
       readAll: queryReadAll = async () => model.findAll(),
       update: queryUpdate = async (req, value) => {

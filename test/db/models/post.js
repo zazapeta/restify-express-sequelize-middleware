@@ -34,10 +34,6 @@ module.exports = (sequelize, DataTypes) => {
           .min(1)
           .max(255)
       }
-    },
-    query: {
-      create: async (req, value) =>
-        Post.create({ ...value, UserId: req.app.restify.auth.user.id })
     }
   };
   return Post;
