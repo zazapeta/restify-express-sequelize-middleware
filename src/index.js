@@ -70,6 +70,9 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
   } = auth;
   // AUTH MODEL WRAPPER - DECORATOR - REMOVAL PASSWORD KEY
   class AuthModel extends authModel {
+    static get name() {
+      return super.name;
+    }
     static create(values) {
       if (values[passwordKey]) {
         const hashedPassword = hashPassword(values[passwordKey]);
@@ -394,8 +397,9 @@ module.exports = ({ app, sequelize, auth, swagger }) => {
   // #region SWAGGER FILE
   // --------------------------
   if (swagger) {
-    delete spec.file;
-    fs.writeFileSync(swagger.file, JSON.stringify(spec));
+    const swaggerUi = require("swagger-ui-express");
+    delete spec.publicPath;
+    app.use(swagger.publicPath, swaggerUi.serve, swaggerUi.setup(spec));
   }
   // --------------------------
   // #endregion SWAGGER FILE

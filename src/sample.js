@@ -27,8 +27,9 @@ sequelize
       },
       swagger: {
         info: { title: "API", version: "1.0.0" },
-        host: "localhost",
+        host: "localhost:3000",
         basePath: "/",
+        publicPath: "/docs",
         file: "./spec.json"
       }
     });
