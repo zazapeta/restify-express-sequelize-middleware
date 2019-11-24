@@ -237,19 +237,20 @@ describe("Restify", () => {
     it.skip("# GET /posts : should 'auth option' be called with correct params", () => {});
   });
 
-  describe.skip("GET /resources/:id - readOne", () => {
-    it("# GET /users/:id : should retrieve a particular user", async () => {
-      const users = await User.findAll();
-
+  describe("GET /resources/:id - readOne", () => {
+    it("# GET /users/:id : should retrieve a particular user (with token)", async () => {
+      const user = await User.findOne({ where: { email: "johndoe@demo.com" } });
+      const token = await getToken("johndoe@demo.com", "unlock");
       await new Promise((resolve, reject) => {
         request(getApp())
-          .get(`/users/${users[0].id}`)
+          .get(`/users/${user.id}`)
+          .set("authorization", token)
           .expect(200)
           .end((err, res) => {
             if (err) {
               reject(err);
             } else {
-              expect(res.body.id).to.equal(users[0].id, "not fetched");
+              expect(res.body.id).to.equal(user.id, "not fetched");
               resolve();
             }
           });
