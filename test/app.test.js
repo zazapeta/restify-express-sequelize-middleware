@@ -298,19 +298,6 @@ describe("Restify", () => {
       expect(createdPost.title).to.be.eq("rere");
       expect(createdPost.UserId).to.be.eq(user.id);
     });
-    it("#POST /users : should return Bad Request as the payload is not satisfied", async () => {
-      await new Promise(resolve => {
-        request(getApp())
-          .post(`/users`)
-          .send({
-            email: "johndoe@demo.com",
-            username: "xan",
-            password: "await auth.hashPassword('unlock')"
-          })
-          .expect(400)
-          .end(resolve);
-      });
-    });
   });
 
   describe("GET /resources - readAll", () => {
