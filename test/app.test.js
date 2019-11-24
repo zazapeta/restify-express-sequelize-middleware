@@ -267,8 +267,26 @@ describe("Restify", () => {
           .end(resolve);
       });
     });
-    it.skip("# GET /posts/:id : should retrieve a particular post", done => {});
-    it.skip("# GET /users/:id : should 'auth option' be called with correct params", () => {});
+    it("# GET /posts/:id : should retrieve a particular post", async () => {
+      const token = await getToken("johndoe@demo.com", "unlock");
+      const posts = (await Post.findAll()).map(post =>
+        JSON.parse(JSON.stringify(post))
+      );
+      await new Promise(resolve => {
+        request(getApp())
+          .get(`/posts/${posts[0].id}`)
+          .set("authorization", token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              expect(res.body).to.deep.include(posts[0]);
+              resolve();
+            }
+          });
+      });
+    });
   });
 
   describe.skip("PUT /resources/:id - update", () => {
