@@ -41,7 +41,7 @@ function getApp() {
       info: { title: "API", version: "1.0.0" },
       host: "localhost",
       basePath: "/",
-      file: "./spec.json"
+      publicPath: "/docs"
     }
   });
   return app;
@@ -101,6 +101,20 @@ describe("Restify", () => {
         { path: "/users/:id", method: "delete" },
         { path: "/login", method: "post" }
       ]);
+    });
+    it("should initialize a route /docs with documentations", done => {
+      const app = getApp();
+      request(app)
+        .get("/docs/")
+        .expect(200)
+        .end((err, res) => {
+          if (err) {
+            done(err);
+          } else {
+            expect(res.text).to.contain("swagger-ui");
+            done();
+          }
+        });
     });
   });
   describe("POST /login", () => {
