@@ -137,7 +137,7 @@ describe("Restify", () => {
           });
       });
     });
-    it("Should get an error msg as the combo email/password is invalid", async () => {
+    it("Should get 401 and an error msg as the combo email/password is invalid", async () => {
       await new Promise((resolve, reject) => {
         request(getApp())
           .post(`/login`)
@@ -184,7 +184,7 @@ describe("Restify", () => {
         )
       );
     });
-    it.only("# 404 : Should get a 404 for the not reachable private routes", async () => {
+    it("# 404 : Should get a 404 for the not reachable private routes", async () => {
       const token = await getToken("johndoe@demo.com", "unlock");
       const routes = [
         { path: "/posts/123", method: "get" },
@@ -204,7 +204,34 @@ describe("Restify", () => {
                 .expect(404)
                 .end(err => {
                   if (err) {
-                    console.log(path, method, err);
+                    reject(err);
+                  } else {
+                    resolve();
+                  }
+                })
+            )
+        )
+      );
+    });
+    it("# 400 : Should get a 400 for the routes as the payload is not validated", async () => {
+      const token = await getToken("johndoe@demo.com", "unlock");
+      const routes = [
+        { path: "/posts", method: "post" },
+        { path: "/posts/1", method: "put" },
+        { path: "/users", method: "post" },
+        { path: "/users/1", method: "put" }
+      ];
+      await Promise.all(
+        routes.map(
+          ({ path, method }) =>
+            new Promise((resolve, reject) =>
+              request(getApp())
+                [method](path)
+                .set("authorization", token)
+                .send({ randomBody: true })
+                .expect(400)
+                .end(err => {
+                  if (err) {
                     reject(err);
                   } else {
                     resolve();
@@ -253,8 +280,24 @@ describe("Restify", () => {
       const createdUserToken = await getToken("marc.billal@gmail.com", "toto");
       expect(createdUserToken).to.exist;
     });
-    it.skip("# POST /posts : should create a particular post", done => {});
-    it.skip("# POST /posts : should 'auth option' be called with correct params", () => {});
+    it("# POST /posts : should create a particular post", async () => {
+      const user = await User.findOne({ where: { email: "johndoe@demo.com" } });
+      const token = await getToken("johndoe@demo.com", "unlock");
+      const createdPost = await new Promise((resolve, reject) => {
+        request(getApp())
+          .post(`/posts`)
+          .send({
+            title: "rere",
+            message: "xan"
+          })
+          .set("authorization", token)
+          .expect(201)
+          .end((err, res) => (err ? reject(err) : resolve(res.body)));
+      });
+      expect(createdPost.message).to.be.eq("xan");
+      expect(createdPost.title).to.be.eq("rere");
+      expect(createdPost.UserId).to.be.eq(user.id);
+    });
     it("#POST /users : should return Bad Request as the payload is not satisfied", async () => {
       await new Promise(resolve => {
         request(getApp())
