@@ -233,7 +233,26 @@ describe("Restify", () => {
           });
       });
     });
-    it.skip("# GET /posts : should retrieve all posts", done => {});
+    it("# GET /posts : should retrieve all posts", async () => {
+      const posts = (await Post.findAll()).map(post =>
+        JSON.parse(JSON.stringify(post))
+      );
+      const token = await getToken("johndoe@demo.com", "unlock");
+      const requestedPosts = await new Promise((resolve, reject) => {
+        request(getApp())
+          .get("/posts")
+          .set("authorization", token)
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              reject(err);
+            } else {
+              resolve(res.body);
+            }
+          });
+      });
+      expect(requestedPosts).to.deep.members(posts);
+    });
     it.skip("# GET /posts : should 'auth option' be called with correct params", () => {});
   });
 
