@@ -11,7 +11,8 @@ module.exports = {
           username: "johndoe",
           password: await hashPassword("unlock"),
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          role: "manager"
         },
         {
           firstName: "Elon",
@@ -20,7 +21,8 @@ module.exports = {
           username: "elonmusk",
           password: await hashPassword("spacex"),
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          role: "admin"
         },
         {
           firstName: "Jeff",
@@ -29,7 +31,8 @@ module.exports = {
           username: "jeffbezos",
           password: await hashPassword("amazon"),
           createdAt: new Date(),
-          updatedAt: new Date()
+          updatedAt: new Date(),
+          role: "admin"
         }
       ],
       {}

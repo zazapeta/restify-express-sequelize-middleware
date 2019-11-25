@@ -11,10 +11,23 @@ Todo:
   ✔ Validate @done(19-11-21 15:16)
   ✔ Swagger @done(19-11-21 15:16)
   ☐ QueryString
-  ☐ ?? Custom Controller (Hook) - onCreate(req, res, next) ??
   ☐ Documentation : https://docusaurus.io/
-  ☐ Identity model
+  ☐ Role management model -- missing tests
+  ☐ End hook -- missing tests
   ✔ remove authModel passwordKey in every response - that should not be sent @done(19-11-24 13:30)
   ✔ hash Password on /POST auth model @done(19-11-24 13:39)
 
-req -> Global auth -> Model auth -> Model validate || default -> Model query || default -> res
+LifeCycle : 
+  req 
+-> default jwt auth || Model auth [getRole] ## authHandler(req) -> {isValid, user, role} ## getRole(req,user)
+-> Model validate [Func or Joi Scheme] || none ## validateHandler(req) -> { error, value } || Joi Scheme -> { error, value }
+-> Model query [Func or By Role Func] || default  ## queryHandler(req, value) -> resource to be send
+-> Model end handler || none ## endHandler(req, res, next, {
+  model,
+  path,
+  method,
+  error,
+  resource,
+  statusCode: 201
+})
+-> res

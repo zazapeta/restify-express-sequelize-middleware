@@ -34,7 +34,15 @@ module.exports = (sequelize, DataTypes) => {
           .min(1)
           .max(255)
       }
-    }
+    },
+    query: {
+      readAll: {
+        admin: req => Post.findAll(),
+        manager: req =>
+          Post.findAll({ where: { UserId: req.app.restify.auth.user.id } })
+      }
+    },
+    end: (req, res, next, restify) => res.json(restify)
   };
   return Post;
 };

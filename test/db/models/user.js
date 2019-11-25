@@ -8,18 +8,24 @@ module.exports = (sequelize, DataTypes) => {
       password: DataTypes.STRING,
       firstName: DataTypes.STRING,
       lastName: DataTypes.STRING,
-      email: DataTypes.STRING
+      email: DataTypes.STRING,
+      role: {
+        allowNull: false,
+        type: DataTypes.STRING,
+        defaultValue: "admin"
+      }
     },
     {}
   );
-  User.associate = (/* models */) => {
+  User.associate = models => {
+    User.hasMany(models.Post);
     // associations can be defined here
   };
   User.restify = {
     /** Make custom auth/role here */
-    auth: {
-      readAll: req => true
-    },
+    // auth: {
+    //   readAll: req => ({ user: true, isValid: true, role: "admin" })
+    // },
     /** Make custom validation here */
     validate: {
       create: {
@@ -59,14 +65,16 @@ module.exports = (sequelize, DataTypes) => {
         email: Joi.string().email()
       }
     },
-    auth: {
-      readAll: () => true
-    },
     /** Make custom query here */
     query: {
       /* a query should return something - otherwise, a 404 not found will be send */
-      update: async (req, value) => {
-        return User.create(value);
+      readAll: {
+        admin: (req, value) => User.findAll(),
+        manager: req => [req.app.restify.auth.user]
+      },
+      readOne: {
+        admin: req => User.findByPk(req.params.id),
+        manager: req => req.app.restify.auth.user
       }
     }
   };

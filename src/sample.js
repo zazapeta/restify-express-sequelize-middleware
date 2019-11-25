@@ -23,12 +23,10 @@ sequelize
         model: User,
         identityKey: "email",
         passwordKey: "password",
-        headersKey: "authorization"
+        headersKey: "authorization",
+        getRole: async (req, user) => user.role
       },
-      identity: {
-        foreignKey: "UserId",
-        identityKey: "id"
-      },
+
       swagger: {
         info: { title: "API", version: "1.0.0" },
         host: "localhost:3000",

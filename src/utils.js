@@ -64,6 +64,10 @@ function pathModelSelector(model) {
   return model.options.name.plural.toLowerCase();
 }
 
+function endModelSelector({ restify }) {
+  return restify.end;
+}
+
 /**
  * TODO: test it
  * return the result of data validation given by the option.validate, or, if defined, by the model it self.
@@ -89,5 +93,6 @@ module.exports = {
   pathModelSelector,
   authModelSelector,
   queryModelSelector,
+  endModelSelector,
   applyValidateModel
 };

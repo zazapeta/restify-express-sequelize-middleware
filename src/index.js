@@ -11,7 +11,8 @@ const {
   pathModelSelector,
   authModelSelector,
   applyValidateModel,
-  queryModelSelector
+  queryModelSelector,
+  endModelSelector
 } = require("./utils");
 
 const { verifyPassword, hashPassword } = require("./auth");
@@ -29,24 +30,38 @@ const authAndValidateAndQuery = req => async (
   queryHandler
 ) => {
   // - AUTH
-  const isValid = await authHandler(req);
-  if (!isValid) {
+  const { isValid, user, role } = await authHandler(req);
+  if (!isValid || !user || !role) {
     return { error: Boom.forbidden("not allowed"), value: null };
   }
+  req.app.restify.auth = { isValid, user, role };
+
   // - VALIDATE
   const { error, value } = await applyValidateModel(validateHandler, req);
   if (error) {
     return { error: Boom.badRequest(error), value: null };
   }
   // - QUERY
-  const resource = await queryHandler(req, value);
+  let resource;
+  if (typeof queryHandler === "function") {
+    resource = await queryHandler(req, value);
+  } else if (typeof queryHandler === "object") {
+    if (typeof queryHandler[role] !== "function") {
+      throw new Error(
+        "model.query handler for the role :" +
+          role +
+          " (given by the constructor 'getRole()') is not defined !"
+      );
+    }
+    resource = await queryHandler[role](req, value);
+  }
   if (!resource) {
     return { error: Boom.notFound("resource not found"), value: null };
   }
   return { error, resource };
 };
 
-module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
+module.exports = ({ app, sequelize, auth, swagger }) => {
   // --------------------------
   // #region RESTIFY APP
   // --------------------------
@@ -66,7 +81,8 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
     model: authModel,
     identityKey,
     passwordKey,
-    headersKey
+    headersKey,
+    getRole
   } = auth;
   // AUTH MODEL WRAPPER - DECORATOR - REMOVAL PASSWORD KEY
   class AuthModel extends authModel {
@@ -113,6 +129,15 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
     });
   });
   // DEFAULT AUTH HANDLER : If model is not providing a auth.create - it wiil use this one in place of.
+  /**
+   * 
+   * @param {*} req 
+   * @returns {
+              user,
+              isValid: true,
+              role: await getRole(req, user)
+            }
+   */
   const defaultAuthHandler = async req => {
     const reqToken = req.headers[headersKey];
     if (reqToken) {
@@ -123,15 +148,18 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
             where: { [identityKey]: jwtUser[identityKey] }
           });
           if (user) {
-            req.app.restify.auth = { user, isLogged: true };
-            return true;
+            return {
+              user,
+              isValid: true,
+              role: await getRole(req, user)
+            };
           }
         }
       } catch (e) {
-        return false;
+        return { isValid: false };
       }
     }
-    return false;
+    return { isValid: false };
   };
   // --------------------------
   // #region SWAGGER BASE
@@ -154,7 +182,7 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
   // --------------------------
   modelsSelector(sequelize).forEach(sequelizeModel => {
     // use the decorated auth model if the current model is the 'authModel' to avoid using nativ .toJSON.
-    // We have to use the new .toJSON to ensure password are remove from responses
+    // We have to use the new .toJSON to ensure password is removed from responses
     const model = sequelizeModel === authModel ? AuthModel : sequelizeModel;
 
     const path = pathModelSelector(model);
@@ -278,46 +306,33 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
       update: validateUpdate,
       delete: validateDelete
     } = validateModelSelector(model);
-
-    // AUTH PARSER
-    const {
-      // TODO : finish it
-      identityKey: identityIdentityKey = null,
-      foreignKey: identityForeignKey
-    } = identity;
     // model.query parser
     const {
-      create: queryCreate = async (req, value) => {
-        if (
-          identityForeignKey &&
-          req.app.restify.auth.isLogged &&
-          req.app.restify.auth.user
-        ) {
-          return model.create({
-            ...value,
-            [identityForeignKey]: req.app.restify.auth.user[identityIdentityKey]
-          });
-        } else {
-          return model.create(value);
+      create: queryCreate = async (req, value) => model.create(value),
+      readOne: queryReadOne = async req => {
+        const resource = await model.findByPk(req.params.id);
+        if (resource) {
+          return resource;
         }
       },
-      readOne: queryReadOne = async req => model.findByPk(req.params.id),
-      readAll: queryReadAll = async () => model.findAll(),
+      readAll: queryReadAll = async req => model.findAll(),
       update: queryUpdate = async (req, value) => {
         const resource = await model.findByPk(req.params.id);
         if (resource) {
           await resource.update(value);
+          return resource;
         }
-        return resource;
       },
       delete: queryDelete = async req => {
         const resource = await model.findByPk(req.params.id);
         if (resource) {
           await resource.destroy();
+          return resource;
         }
-        return resource;
       }
     } = queryModelSelector(model);
+    // end model parser
+    const end = endModelSelector(model);
     // --------------------------
     // #endregion MODEL restify options
     // --------------------------
@@ -328,13 +343,23 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
     /**
      * CREATE
      */
-    app.post(`/${path}`, async (req, res) => {
+    app.post(`/${path}`, async (req, res, next) => {
       // AUTH & VALIDATE & QUERY
       const { error, resource } = await authAndValidateAndQuery(req)(
         authCreate,
         validateCreate,
         queryCreate
       );
+      if (end) {
+        return end(req, res, next, {
+          model,
+          path: `/${path}`,
+          method: "post",
+          error,
+          resource,
+          statusCode: 201
+        });
+      }
       if (error) {
         return boomIt(res, error);
       }
@@ -346,13 +371,23 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
      * READ
      */
     // READ ONE
-    app.get(`/${path}/:id`, async (req, res) => {
+    app.get(`/${path}/:id`, async (req, res, next) => {
       // AUTH & VALIDATE & QUERY
       const { error, resource } = await authAndValidateAndQuery(req)(
         authReadOne,
         validateReadOne,
         queryReadOne
       );
+      if (end) {
+        return end(req, res, next, {
+          model,
+          path: `/${path}/:id`,
+          method: "get",
+          error,
+          resource,
+          statusCode: 200
+        });
+      }
       if (error) {
         return boomIt(res, error);
       }
@@ -360,13 +395,23 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
       res.json(resource);
     });
     // READ ALL
-    app.get(`/${path}`, async (req, res) => {
+    app.get(`/${path}`, async (req, res, next) => {
       // AUTH & VALIDATE & QUERY
       const { error, resource } = await authAndValidateAndQuery(req)(
         authReadAll,
         validateReadAll,
         queryReadAll
       );
+      if (end) {
+        return end(req, res, next, {
+          model,
+          path: `/${path}`,
+          method: "get",
+          error,
+          resource,
+          statusCode: 200
+        });
+      }
       if (error) {
         return boomIt(res, error);
       }
@@ -383,6 +428,16 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
         validateUpdate,
         queryUpdate
       );
+      if (end) {
+        return end(req, res, next, {
+          model,
+          path: `/${path}/:id`,
+          method: "put",
+          error,
+          resource,
+          statusCode: 200
+        });
+      }
       if (error) {
         return boomIt(res, error);
       }
@@ -399,6 +454,16 @@ module.exports = ({ app, sequelize, auth, identity = {}, swagger }) => {
         validateDelete,
         queryDelete
       );
+      if (end) {
+        return end(req, res, next, {
+          model,
+          path: `/${path}/:id`,
+          method: "delete",
+          error,
+          resource,
+          statusCode: 200
+        });
+      }
       if (error) {
         return boomIt(res, error);
       }
