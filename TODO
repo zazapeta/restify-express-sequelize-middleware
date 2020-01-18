@@ -3,17 +3,20 @@ Todo:
   ☐ Crud
     ✔ GET / @done(19-11-21 15:15)
     ✔ GET/:id @done(19-11-21 12:07)
+    ✔ POST / @done(19-11-21 11:58)
     ☐ PUT /:id - missing tests
     ☐ DEL /:id - missing tests
-    ✔ POST / @done(19-11-21 11:58)
-  ✔ Auth @done(19-11-21 15:15)
-  ✔ Roles @done(19-11-21 15:15)
-  ✔ Validate @done(19-11-21 15:16)
-  ✔ Swagger @done(19-11-21 15:16)
   ☐ QueryString
   ☐ Documentation : https://docusaurus.io/
   ☐ Role management model -- missing tests
   ☐ End hook -- missing tests
+  ☐ Relational routes ?
+  ☐ Split tests 
+  ☐ Split code
+  ✔ Auth @done(19-11-21 15:15)
+  ✔ Roles @done(19-11-21 15:15)
+  ✔ Validate @done(19-11-21 15:16)
+  ✔ Swagger @done(19-11-21 15:16)
   ✔ remove authModel passwordKey in every response - that should not be sent @done(19-11-24 13:30)
   ✔ hash Password on /POST auth model @done(19-11-24 13:39)
 
